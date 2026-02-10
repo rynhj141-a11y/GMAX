@@ -124,6 +124,14 @@ app.put('/members/:id', (req, res) => {
         res.json({ message: "Membership extended!" });
     });
 });
+// 6. GET a single member's details
+app.get('/members/:id', (req, res) => {
+    const { id } = req.params;
+    db.get(`SELECT * FROM members WHERE id = ?`, [id], (err, member) => {
+        if (err || !member) return res.status(404).json({ error: "Member not found" });
+        res.json(member);
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`

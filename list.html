@@ -60,7 +60,7 @@
                     const row = `
     <tr id="row-${member.id}">
         <td><img src="${member.photo_path}" class="profile-img"></td>
-        <td>${member.name}</td>
+        <td><a href="profile.html?id=${member.id}" style="color:blue; font-weight:bold;">${member.name}</a></td>
         <td><code>${member.uuid}</code></td>
         <td>${member.expiry_date}</td>
         <td class="${isExpired ? 'status-expired' : 'status-active'}">

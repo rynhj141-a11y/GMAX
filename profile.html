@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Member Profile</title>
+    <style>
+        .profile-card { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; font-family: sans-serif; }
+        .full-photo { width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 5px solid #333; }
+        .qr-large { width: 150px; margin-top: 20px; border: 1px solid #ddd; padding: 10px; }
+        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; color: white; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="profile-card" id="profile">
+        Loading...
+    </div>
+
+    <script>
+        // Get the ID from the URL (e.g., profile.html?id=5)
+        const urlParams = new URLSearchParams(window.location.search);
+        const memberId = urlParams.get('id');
+
+        fetch(`http://localhost:3000/members/${memberId}`)
+            .then(res => res.json())
+            .then(member => {
+                const today = new Date();
+                const isExpired = today > new Date(member.expiry_date);
+                
+                document.getElementById('profile').innerHTML = `
+                    <img src="${member.photo_path}" class="full-photo">
+                    <h1>${member.name}</h1>
+                    <div class="status-badge" style="background:${isExpired ? 'red' : 'green'}">
+                        ${isExpired ? 'EXPIRED' : 'ACTIVE'}
+                    </div>
+                    <p><strong>Expiry Date:</strong> ${member.expiry_date}</p>
+                    <p><strong>Member ID:</strong> ${member.uuid}</p>
+                    <hr>
+                    <p>Member's Personal Access QR:</p>
+                    <img src="qrcodes/${member.uuid}.png" class="qr-large">
+                    <br><br>
+                    <a href="list.html">Back to List</a>
+                `;
+            });
+    </script>
+</body>
+</html>
