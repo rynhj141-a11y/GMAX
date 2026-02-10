@@ -20,7 +20,7 @@
     <a href="test.html" style="color: white; text-decoration: none;">➕ Add Member</a>
 </nav>
     <h1>Member Directory</h1>
-    <a href="index.html">← Back to Scanner</a> | <a href="test.html">Add New Member</a>
+    
     <br><br>
     <table>
         <thead>
@@ -31,6 +31,7 @@
                 <th>Expiry Date</th>
                 <th>Status</th>
                 <th>QR Code</th>
+<th>Actions</th>
             </tr>
         </thead>
         <tbody id="memberTable">
@@ -43,7 +44,7 @@
             .then(members => {
                 const tableBody = document.getElementById('memberTable');
                 const today = new Date();
-if (members.length === 0) {
+            if (members.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
                         <td colspan="6" style="text-align:center; padding: 20px; color: #666;">
@@ -57,20 +58,48 @@ if (members.length === 0) {
                     const isExpired = today > expiryDate;
                     
                     const row = `
-                        <tr>
-                            <td><img src="${member.photo_path}" class="profile-img"></td>
-                            <td>${member.name}</td>
-                            <td><code>${member.uuid}</code></td>
-                            <td>${member.expiry_date}</td>
-                            <td class="${isExpired ? 'status-expired' : 'status-active'}">
-                                ${isExpired ? 'EXPIRED' : 'ACTIVE'}
-                            </td>
-                            <td><img src="qrcodes/${member.uuid}.png" class="qr-img" onclick="window.open(this.src)"></td>
-                        </tr>
-                    `;
+    <tr id="row-${member.id}">
+        <td><img src="${member.photo_path}" class="profile-img"></td>
+        <td>${member.name}</td>
+        <td><code>${member.uuid}</code></td>
+        <td>${member.expiry_date}</td>
+        <td class="${isExpired ? 'status-expired' : 'status-active'}">
+            ${isExpired ? 'EXPIRED' : 'ACTIVE'}
+        </td>
+        <td><img src="qrcodes/${member.uuid}.png" class="qr-img" onclick="window.open(this.src)"></td>
+        <td>
+            <button onclick="extendMember(${member.id})" style="background:orange; color:white; border:none; padding:5px; cursor:pointer;">Extend</button>
+            <button onclick="deleteMember(${member.id})" style="background:red; color:white; border:none; padding:5px; cursor:pointer;">Delete</button>
+        </td>
+    </tr>
+`;
                     tableBody.innerHTML += row;
                 });
             });
+    function deleteMember(id) {
+    if (confirm("Are you sure you want to delete this member?")) {
+        fetch(`http://localhost:3000/members/${id}`, { method: 'DELETE' })
+        .then(() => {
+            document.getElementById(`row-${id}`).remove();
+            alert("Member removed.");
+        });
+    }
+}
+
+function extendMember(id) {
+    const newDate = prompt("Enter new expiry date (YYYY-MM-DD):");
+    if (newDate) {
+        fetch(`http://localhost:3000/members/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_expiry: newDate })
+        })
+        .then(() => {
+            alert("Membership updated! Refresh to see changes.");
+            location.reload();
+        });
+    }
+}
     </script>
 </body>
 </html>

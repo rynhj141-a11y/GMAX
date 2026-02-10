@@ -102,6 +102,28 @@ app.get('/members', (req, res) => {
         res.json(rows);
     });
 });
+// 4. DELETE a member
+app.delete('/members/:id', (req, res) => {
+    const { id } = req.params;
+    const sql = `DELETE FROM members WHERE id = ?`;
+
+    db.run(sql, id, function(err) {
+        if (err) return res.status(400).json({ error: err.message });
+        res.json({ message: "Member deleted successfully" });
+    });
+});
+
+// 5. UPDATE a member (Extend membership)
+app.put('/members/:id', (req, res) => {
+    const { id } = req.params;
+    const { new_expiry } = req.body;
+    const sql = `UPDATE members SET expiry_date = ? WHERE id = ?`;
+
+    db.run(sql, [new_expiry, id], function(err) {
+        if (err) return res.status(400).json({ error: err.message });
+        res.json({ message: "Membership extended!" });
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`
