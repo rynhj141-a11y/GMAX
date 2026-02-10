@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gym GMAX - Entry Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; }
+        #reader { width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        #result { margin-top: 20px; font-size: 1.5rem; font-weight: bold; }
+        .member-photo { width: 200px; border-radius: 50%; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <h1>GMAX Gym Check-In</h1>
+    <div id="reader"></div>
+    <div id="result">Scanning...</div>
+    <img id="memberPhoto" class="member-photo" src="" alt="Member Photo">
+
+    <script>
+        const html5QrCode = new Html5Qrcode("reader");
+
+        function onScanSuccess(decodedText) {
+            // Send the scanned UUID to our Node.js server
+            fetch('http://localhost:3000/verify-member', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uuid: decodedText })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                const photoImg = document.getElementById('memberPhoto');
+
+                resultDiv.innerText = data.message + " - " + (data.name || "");
+                resultDiv.style.color = data.status === "Success" ? "green" : "red";
+
+                if(data.photo) {
+                    photoImg.src = 'http://localhost:3000/' + data.photo;
+                    photoImg.style.display = "inline-block";
+                }
+            });
+        }
+
+        html5QrCode.start({ facingMode: "user" }, { fps: 10, qrbox: 250 }, onScanSuccess);
+    </script>
+</body>
+</html>

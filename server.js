@@ -8,6 +8,7 @@ const app = express();
 const PORT = 3000;
 
 // --- MIDDLEWARE ---
+
 app.use(express.json()); // Lets us read JSON data
 app.use(express.static('.')); // Serves your index.html
 app.use('/uploads', express.static('uploads')); // Makes member photos visible to the browser
@@ -57,6 +58,36 @@ app.post('/add-member', upload.single('photo'), (req, res) => {
                 uuid: uuid,
                 photo: photo_path
             });
+        });
+    });
+});
+app.post('/verify-member', (req, res) => {
+    const { uuid } = req.body; // The scanner will send the UUID it read
+
+    const sql = `SELECT * FROM members WHERE uuid = ?`;
+
+    db.get(sql, [uuid], (err, member) => {
+        if (err || !member) {
+            return res.status(404).json({ status: "Denied", message: "Member not found" });
+        }
+
+        const today = new Date();
+        const expiry = new Date(member.expiry_date);
+
+        if (today > expiry) {
+            return res.json({ 
+                status: "Denied", 
+                message: "Membership Expired!",
+                name: member.name,
+                photo: member.photo_path 
+            });
+        }
+
+        res.json({ 
+            status: "Success", 
+            message: "Welcome back!", 
+            name: member.name,
+            photo: member.photo_path 
         });
     });
 });

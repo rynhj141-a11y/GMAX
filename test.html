@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Add Gym Member Test</h2>
+    <form action="http://localhost:3000/add-member" method="POST" enctype="multipart/form-data">
+        <input type="text" name="name" placeholder="Full Name" required><br><br>
+        <input type="date" name="expiry_date" required><br><br>
+        <input type="file" name="photo" accept="image/*" required><br><br>
+        <button type="submit">Register Member</button>
+    </form>
+</body>
+</html>
