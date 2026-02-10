@@ -1,17 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMAX - Register Member</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        nav { background: #333; padding: 15px; width: 100%; text-align: center; margin-bottom: 30px; border-radius: 8px; }
+        nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: bold; }
+        
+        .form-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #333; margin-top: 0; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 18px; cursor: pointer; transition: background 0.3s; }
+        button:hover { background: #218838; }
+        
+        .preview-img { width: 100%; height: 200px; object-fit: cover; border-radius: 6px; margin-top: 10px; display: none; border: 2px dashed #ccc; }
+    </style>
+</head>
 <body>
-    <nav style="background: #333; padding: 15px; margin-bottom: 20px;">
-    <a href="index.html" style="color: white; margin-right: 20px; text-decoration: none;">🏠 Scanner</a>
-    <a href="list.html" style="color: white; margin-right: 20px; text-decoration: none;">📋 Member List</a>
-    <a href="test.html" style="color: white; text-decoration: none;">➕ Add Member</a>
-</nav>
-    <h2>Add Gym Member Test</h2>
-    <form action="http://localhost:3000/add-member" method="POST" enctype="multipart/form-data">
-        <input type="text" name="name" placeholder="Full Name" required><br><br>
-        <input type="date" name="expiry_date" required><br><br>
-        <input type="file" name="photo" accept="image/*" required><br><br>
-        <button type="submit">Register Member</button>
-    </form>
+
+    <nav>
+        <a href="index.html">🏠 Scanner</a>
+        <a href="list.html">📋 Member List</a>
+        <a href="receipt.html">💰 Revenue</a>
+    </nav>
+
+    <div class="form-container">
+        <h2>New Member Registration</h2>
+        <form action="http://localhost:3000/add-member" method="POST" enctype="multipart/form-data">
+            
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="Enter name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" name="phone" placeholder="e.g. 0123456789" required>
+            </div>
+
+            <div class="form-group">
+                <label>Membership Plan</label>
+                <select name="plan_id" id="planSelect" required>
+                    <option value="">⌛ Loading plans from database...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Profile Photo</label>
+                <input type="file" name="photo" id="photoInput" accept="image/*" required>
+                <img id="preview" class="preview-img">
+            </div>
+
+            <button type="submit">Complete Registration</button>
+        </form>
+    </div>
+
+    <script>
+        // 1. Fetch Plans from Server on Page Load
+        fetch('http://localhost:3000/plans')
+            .then(res => res.json())
+            .then(plans => {
+                const select = document.getElementById('planSelect');
+                select.innerHTML = '<option value="">-- Select Plan --</option>';
+                
+                plans.forEach(plan => {
+                    const option = document.createElement('option');
+                    option.value = plan.id;
+                    option.textContent = `${plan.plan_name} ($${plan.price} / ${plan.duration_months} mo)`;
+                    select.appendChild(option);
+                });
+            })
+            .catch(err => {
+                console.error("Error loading plans:", err);
+                document.getElementById('planSelect').innerHTML = '<option value="">Error loading plans</option>';
+            });
+
+        // 2. Image Preview Logic (To make it look professional)
+        document.getElementById('photoInput').onchange = function (evt) {
+            const [file] = this.files;
+            if (file) {
+                const preview = document.getElementById('preview');
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+            }
+        };
+    </script>
 </body>
 </html>

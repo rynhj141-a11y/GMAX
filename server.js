@@ -32,31 +32,36 @@ app.get('/', (req, res) => {
 
 // 2. Add New Member (Includes Photo & QR Generation)
 app.post('/add-member', upload.single('photo'), (req, res) => {
-    const { name, expiry_date } = req.body;
+    // 1. Get phone from the form (req.body)
+    const { name, phone, plan_id } = req.body; 
     const photo_path = req.file ? req.file.path : null;
-    
-    // Generate a unique ID for the QR code
     const uuid = "GYM-" + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-    // Save to Database
-    const sql = `INSERT INTO members (name, expiry_date, uuid, photo_path) VALUES (?, ?, ?, ?)`;
-    
-    db.run(sql, [name, expiry_date, uuid, photo_path], function(err) {
-        if (err) {
-            return res.status(400).json({ error: err.message });
-        }
+    db.get(`SELECT * FROM membership_plans WHERE id = ?`, [plan_id], (err, plan) => {
+        if (err || !plan) return res.status(400).json({ error: "Invalid Plan" });
 
-        // Generate the physical QR Code image
-        const qrPath = `./qrcodes/${uuid}.png`;
-        qrcode.toFile(qrPath, uuid, (qrErr) => {
-            if (qrErr) console.error("QR Generation Error:", qrErr);
+        let regDate = new Date();
+        let expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + plan.duration_months);
+
+        const regDateStr = regDate.toISOString().split('T')[0];
+        const expiryDateStr = expiry.toISOString().split('T')[0];
+
+        // 2. Add 'phone' to the SQL command
+        const sql = `INSERT INTO members (name, phone, plan_id, registration_date, expiry_date, uuid, photo_path) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        
+        // 3. Pass the phone variable into the array here
+        db.run(sql, [name, phone, plan_id, regDateStr, expiryDateStr, uuid, photo_path], function(err) {
+            if (err) return res.status(400).json({ error: err.message });
             
-            console.log(`Successfully registered: ${name}`);
-            res.json({ 
-                message: "Member Registered Successfully!", 
-                memberId: this.lastID,
-                uuid: uuid,
-                photo: photo_path
+            const qrPath = `./qrcodes/${uuid}.png`;
+            qrcode.toFile(qrPath, uuid, () => {
+                res.json({ 
+                    message: "Member Saved to Database!", 
+                    name: name, 
+                    phone: phone // Confirmation
+                });
             });
         });
     });
@@ -130,6 +135,61 @@ app.get('/members/:id', (req, res) => {
     db.get(`SELECT * FROM members WHERE id = ?`, [id], (err, member) => {
         if (err || !member) return res.status(404).json({ error: "Member not found" });
         res.json(member);
+    });
+});
+
+   app.get('/revenue-report', (req, res) => {
+    const { start_date, end_date } = req.query;
+
+    // This query gets the Sum and Count
+    const summarySql = `
+        SELECT SUM(p.price) as total_revenue, COUNT(m.id) as total_signups
+        FROM members m
+        JOIN membership_plans p ON m.plan_id = p.id
+        WHERE m.registration_date BETWEEN ? AND ?`;
+
+    // This query gets the individual member details for the receipt
+    const listSql = `
+        SELECT m.name, m.phone, p.plan_name, p.price
+        FROM members m
+        JOIN membership_plans p ON m.plan_id = p.id
+        WHERE m.registration_date BETWEEN ? AND ?`;
+
+    db.get(summarySql, [start_date, end_date], (err, summary) => {
+        if (err) return res.status(400).json({ error: err.message });
+        
+        db.all(listSql, [start_date, end_date], (err, transactions) => {
+            if (err) return res.status(400).json({ error: err.message });
+            
+            res.json({
+                total_revenue: summary.total_revenue,
+                total_signups: summary.total_signups,
+                transactions: transactions // This contains names and phone numbers
+            });
+        });
+    });
+});
+// 7. Get all membership plans
+app.get('/plans', (req, res) => {
+    db.all(`SELECT * FROM membership_plans`, [], (err, rows) => {
+        if (err) return res.status(400).json({ error: err.message });
+        res.json(rows);
+    });
+});
+app.get('/admin-stats', (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const sql = `
+        SELECT 
+            COUNT(*) as total_members,
+            SUM(CASE WHEN expiry_date >= ? THEN 1 ELSE 0 END) as active_members,
+            SUM(CASE WHEN registration_date = ? THEN 1 ELSE 0 END) as new_today
+        FROM members
+    `;
+
+    db.get(sql, [today, today], (err, row) => {
+        if (err) return res.status(400).json({ error: err.message });
+        res.json(row);
     });
 });
 

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GMAX - Financial Report</title>
+    <style>
+        .report-box { border: 2px solid #333; padding: 20px; max-width: 400px; margin: 20px auto; text-align: center; font-family: 'Courier New', Courier, monospace; }
+        .stat { font-size: 1.5rem; color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="report-box">
+        <h2>GMAX GYM REVENUE</h2>
+        <input type="date" id="start"> to <input type="date" id="end">
+        <br><br>
+        <button onclick="getReport()">Generate Report</button>
+        <hr>
+        <div id="results">
+            <p>Total Signups: <span id="signups">0</span></p>
+            <p>Total Cash: <span id="cash" class="stat">$0.00</span></p>
+        </div>
+    </div>
+
+    <script>
+      function getReport() {
+    const start = document.getElementById('start').value;
+    const end = document.getElementById('end').value;
+
+    // Fetch the detailed list of transactions
+    fetch(`/revenue-report?start_date=${start}&end_date=${end}`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('signups').innerText = data.total_signups || 0;
+            document.getElementById('cash').innerText = `$${(data.total_revenue || 0).toFixed(2)}`;
+            
+            // Build a list of people who paid during this time
+            const listDiv = document.getElementById('transactionList');
+            listDiv.innerHTML = "<h4>Transactions:</h4>";
+            
+            data.transactions.forEach(t => {
+                listDiv.innerHTML += `
+                    <div style="border-bottom: 1px dashed #ccc; padding: 5px; text-align: left;">
+                        <strong>${t.name}</strong> (${t.phone}) <br>
+                        Plan: ${t.plan_name} - $${t.price}
+                    </div>
+                `;
+            });
+        });
+}
+    </script>
+</body>
+</html>
