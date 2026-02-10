@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GMAX - Member Directory</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #333; color: white; }
+        .profile-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+        .qr-img { width: 50px; cursor: pointer; }
+        .status-active { color: green; font-weight: bold; }
+        .status-expired { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <nav style="background: #333; padding: 15px; margin-bottom: 20px;">
+    <a href="index.html" style="color: white; margin-right: 20px; text-decoration: none;">🏠 Scanner</a>
+    <a href="list.html" style="color: white; margin-right: 20px; text-decoration: none;">📋 Member List</a>
+    <a href="test.html" style="color: white; text-decoration: none;">➕ Add Member</a>
+</nav>
+    <h1>Member Directory</h1>
+    <a href="index.html">← Back to Scanner</a> | <a href="test.html">Add New Member</a>
+    <br><br>
+    <table>
+        <thead>
+            <tr>
+                <th>Photo</th>
+                <th>Name</th>
+                <th>UUID</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>QR Code</th>
+            </tr>
+        </thead>
+        <tbody id="memberTable">
+            </tbody>
+    </table>
+
+    <script>
+        fetch('http://localhost:3000/members')
+            .then(res => res.json())
+            .then(members => {
+                const tableBody = document.getElementById('memberTable');
+                const today = new Date();
+if (members.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 20px; color: #666;">
+                            No members found. <a href="test.html">Click here to add your first member!</a>
+                        </td>
+                    </tr>`;
+                return; // Stop the rest of the code from running
+            }
+                members.forEach(member => {
+                    const expiryDate = new Date(member.expiry_date);
+                    const isExpired = today > expiryDate;
+                    
+                    const row = `
+                        <tr>
+                            <td><img src="${member.photo_path}" class="profile-img"></td>
+                            <td>${member.name}</td>
+                            <td><code>${member.uuid}</code></td>
+                            <td>${member.expiry_date}</td>
+                            <td class="${isExpired ? 'status-expired' : 'status-active'}">
+                                ${isExpired ? 'EXPIRED' : 'ACTIVE'}
+                            </td>
+                            <td><img src="qrcodes/${member.uuid}.png" class="qr-img" onclick="window.open(this.src)"></td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            });
+    </script>
+</body>
+</html>

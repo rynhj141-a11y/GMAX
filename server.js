@@ -91,6 +91,17 @@ app.post('/verify-member', (req, res) => {
         });
     });
 });
+// 3. Get all members for the Admin List
+app.get('/members', (req, res) => {
+    const sql = `SELECT * FROM members ORDER BY id DESC`;
+    
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            return res.status(400).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`
