@@ -17,4 +17,4 @@ Data integrity checks to avoid duplicates and wrong entries
 [Adjust to what the tool really does]
 🛠️ Tech stack
 
-HTML · CSS · JavaScript · [database used, e.g. SQL / Excel / Firebase] [Fix to match the project]
+HTML · CSS · JavaScript · SQL
